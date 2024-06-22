@@ -65,7 +65,8 @@ section {
   letter-spacing: 0.04em;
   color: #808080;
 }
-.search-btn {
+.search-btn,
+.load-more-btn {
   border: none;
   border-radius: 8px;
   padding: 8px 16px;
@@ -79,6 +80,10 @@ section {
   color: #fff;
   transition: background-color 0.5s ease-in-out;
 }
+.load-more-btn {
+  display: block;
+  margin: 0 auto;
+}
 
 .search-btn:hover,
 .search-btn:focus {
@@ -89,11 +94,13 @@ section {
   flex-wrap: wrap;
   gap: 24px;
   justify-content: center;
+  margin-bottom: 25px;
 }
 .gallery-item {
-  border: 1px solid #808080;
-  width: 360px;
-  height: 200px;
+  /* border: 1px solid #808080; */
+  /* width: 360px;
+  height: 200px; */
+  flex-basis: calc((100% - 96px) / 5);
 }
 .gallery-item-img {
   display: block;

@@ -5,52 +5,80 @@ import 'izitoast/dist/css/iziToast.min.css';
 import closeIcon from './img/close.svg';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+const refs = {
+  searchForm: document.querySelector('.search-form'),
+  gallery: document.querySelector('.gallery'),
+  loader: document.querySelector('.loader'),
+  loadMoreBtn: document.querySelector('.load-more-btn'),
+};
 
-const searchForm = document.querySelector('.search-form');
-const gallery = document.querySelector('.gallery');
-const loader = document.querySelector('.loader');
 const lightbox = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
   captionDelay: 350,
 });
 
-searchForm.addEventListener('submit', onSearchBtnSubmit);
+let query = '';
+let currentPage = 1;
+let maxPage = 1;
+const perPage = 15;
+refs.searchForm.addEventListener('submit', onSearchBtnSubmit);
 
-function onSearchBtnSubmit(event) {
+async function onSearchBtnSubmit(event) {
   event.preventDefault();
-  const valueToSearch = event.target.elements.searchField.value.trim();
-
-  if (valueToSearch === '') {
-    gallery.innerHTML = '';
+  query = event.target.elements.searchField.value.trim();
+  currentPage = 1;
+  if (query === '') {
+    refs.gallery.innerHTML = '';
     displayMessage('You forgot enter data for search', '#ffa000');
     return;
   }
-  loader.classList.remove('visually-hidden');
-
-  fetchPhotos(valueToSearch)
-    .then(data => {
-      if (data.hits.length === 0) {
-        gallery.innerHTML = '';
-        displayMessage(
-          'Sorry, there are no images matching your search query. Please try again!',
-          '#EF4040'
-        );
-      } else {
-        const markup = galleryTemplate(data.hits);
-        gallery.innerHTML = markup;
-        lightbox.refresh();
-      }
-
-      loader.classList.add('visually-hidden');
-    })
-    .catch(error => {
+  showElement(refs.loader);
+  hideElement(refs.loadMoreBtn);
+  try {
+    const { totalHits, hits } = await fetchPhotos(query, currentPage);
+    if (hits.length === 0) {
+      refs.gallery.innerHTML = '';
       displayMessage(
-        'An error occurred while fetching photos. Please try again later.',
+        'Sorry, there are no images matching your search query. Please try again!',
         '#EF4040'
       );
-      loader.classList.add('visually-hidden');
-    });
-  searchForm.reset();
+    }
+    maxPage = Math.ceil(totalHits / perPage);
+    const markup = galleryTemplate(hits);
+    refs.gallery.innerHTML = markup;
+    lightbox.refresh();
+  } catch (error) {
+    console.log(error);
+    displayMessage(
+      'An error occurred while fetching photos. Please try again later.',
+      '#EF4040'
+    );
+  }
+
+  updateLoadMoreBtnStatus();
+  hideElement(refs.loader);
+}
+
+refs.loadMoreBtn.addEventListener('click', handleLoadMoreBtnClick);
+
+async function handleLoadMoreBtnClick() {
+  showElement(refs.loader);
+  currentPage++;
+  try {
+    const { hits } = await fetchPhotos(query, currentPage);
+    const markup = galleryTemplate(hits);
+    refs.gallery.insertAdjacentHTML('beforeend', markup);
+    lightbox.refresh();
+  } catch (error) {
+    console.log(error);
+    displayMessage(
+      'An error occurred while fetching photos. Please try again later.',
+      '#EF4040'
+    );
+  }
+
+  hideElement(refs.loader);
+  updateLoadMoreBtnStatus();
 }
 
 function displayMessage(message, color) {
@@ -63,4 +91,19 @@ function displayMessage(message, color) {
     theme: 'dark',
     maxWidth: '350px',
   });
+}
+function updateLoadMoreBtnStatus() {
+  if (currentPage >= maxPage) {
+    hideElement(refs.loadMoreBtn);
+    displayMessage('No more avaliable pictures', '#ffa000');
+    refs.searchForm.reset();
+  } else showElement(refs.loadMoreBtn);
+}
+
+function hideElement(element) {
+  element.classList.add('visually-hidden');
+}
+
+function showElement(element) {
+  element.classList.remove('visually-hidden');
 }
