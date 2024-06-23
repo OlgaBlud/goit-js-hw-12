@@ -98,8 +98,8 @@ section {
 }
 .gallery-item {
   /* border: 1px solid #808080; */
-  /* width: 360px;
-  height: 200px; */
+  /* width: 360px;*/
+  height: 250px;
   flex-basis: calc((100% - 96px) / 5);
 }
 .gallery-item-img {
