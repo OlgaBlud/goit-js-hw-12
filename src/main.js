@@ -47,14 +47,10 @@ async function onSearchBtnSubmit(event) {
     const markup = galleryTemplate(hits);
     refs.gallery.innerHTML = markup;
     lightbox.refresh();
+    catchLastPage();
   } catch (error) {
-    console.log(error);
-    displayMessage(
-      'An error occurred while fetching photos. Please try again later.',
-      '#EF4040'
-    );
+    showErrMessage(error);
   }
-
   updateLoadMoreBtnStatus();
   hideElement(refs.loader);
 }
@@ -62,6 +58,7 @@ async function onSearchBtnSubmit(event) {
 refs.loadMoreBtn.addEventListener('click', handleLoadMoreBtnClick);
 
 async function handleLoadMoreBtnClick() {
+  hideElement(refs.loadMoreBtn);
   showElement(refs.loader);
   currentPage++;
   try {
@@ -69,18 +66,45 @@ async function handleLoadMoreBtnClick() {
     const markup = galleryTemplate(hits);
     refs.gallery.insertAdjacentHTML('beforeend', markup);
     lightbox.refresh();
+    catchLastPage();
   } catch (error) {
-    console.log(error);
-    displayMessage(
-      'An error occurred while fetching photos. Please try again later.',
-      '#EF4040'
-    );
+    showErrMessage(error);
   }
 
-  hideElement(refs.loader);
   updateLoadMoreBtnStatus();
+  hideElement(refs.loader);
 }
 
+function updateLoadMoreBtnStatus() {
+  if (currentPage >= maxPage) {
+    hideElement(refs.loadMoreBtn);
+  } else showElement(refs.loadMoreBtn);
+}
+function catchLastPage() {
+  if (maxPage !== currentPage) {
+    return;
+  } else {
+    displayMessage(
+      "We're sorry, but you've reached the end of search results.",
+      '#ffa000'
+    );
+  }
+  refs.searchForm.reset();
+}
+function hideElement(element) {
+  element.classList.add('visually-hidden');
+}
+
+function showElement(element) {
+  element.classList.remove('visually-hidden');
+}
+function showErrMessage(error) {
+  console.log(error);
+  displayMessage(
+    'An error occurred while fetching photos. Please try again later.',
+    '#EF4040'
+  );
+}
 function displayMessage(message, color) {
   iziToast.show({
     message: message,
@@ -91,19 +115,4 @@ function displayMessage(message, color) {
     theme: 'dark',
     maxWidth: '350px',
   });
-}
-function updateLoadMoreBtnStatus() {
-  if (currentPage >= maxPage) {
-    hideElement(refs.loadMoreBtn);
-    displayMessage('No more avaliable pictures', '#ffa000');
-    refs.searchForm.reset();
-  } else showElement(refs.loadMoreBtn);
-}
-
-function hideElement(element) {
-  element.classList.add('visually-hidden');
-}
-
-function showElement(element) {
-  element.classList.remove('visually-hidden');
 }
