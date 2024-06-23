@@ -14,10 +14,6 @@ export async function fetchPhotos(query, currentPage) {
 
   try {
     const { data } = await axios.get(url, { params });
-    console.log(data);
-    // const { totalHits, hits } = data;
-    // console.log(hits);
-    // console.log(totalHits);
     return data;
   } catch (error) {
     console.error('Error fetching photos:', error);

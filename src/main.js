@@ -36,12 +36,14 @@ async function onSearchBtnSubmit(event) {
   hideElement(refs.loadMoreBtn);
   try {
     const { totalHits, hits } = await fetchPhotos(query, currentPage);
-    if (hits.length === 0) {
+    if (totalHits === 0) {
       refs.gallery.innerHTML = '';
       displayMessage(
         'Sorry, there are no images matching your search query. Please try again!',
         '#EF4040'
       );
+      hideElement(refs.loader);
+      return;
     }
     maxPage = Math.ceil(totalHits / perPage);
     const markup = galleryTemplate(hits);
@@ -67,6 +69,7 @@ async function handleLoadMoreBtnClick() {
     refs.gallery.insertAdjacentHTML('beforeend', markup);
     lightbox.refresh();
     catchLastPage();
+    scrollOldElements();
   } catch (error) {
     showErrMessage(error);
   }
@@ -114,5 +117,14 @@ function displayMessage(message, color) {
     messageColor: '#fff',
     theme: 'dark',
     maxWidth: '350px',
+  });
+}
+function scrollOldElements() {
+  const galleryItem = refs.gallery.children[0];
+  const galleryItemHeight = galleryItem.getBoundingClientRect().height;
+  const scrollHeight = galleryItemHeight * 2;
+  scrollBy({
+    top: scrollHeight,
+    behavior: 'smooth',
   });
 }
