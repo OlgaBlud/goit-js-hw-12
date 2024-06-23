@@ -21,43 +21,32 @@ let query = '';
 let currentPage = 1;
 let maxPage = 1;
 const perPage = 15;
+
 refs.searchForm.addEventListener('submit', onSearchBtnSubmit);
+refs.loadMoreBtn.addEventListener('click', handleLoadMoreBtnClick);
 
 async function onSearchBtnSubmit(event) {
   event.preventDefault();
   query = event.target.elements.searchField.value.trim();
   currentPage = 1;
   if (query === '') {
-    refs.gallery.innerHTML = '';
+    clearGallery();
     displayMessage('You forgot enter data for search', '#ffa000');
+    hideElement(refs.loadMoreBtn);
     return;
   }
   showElement(refs.loader);
   hideElement(refs.loadMoreBtn);
   try {
     const { totalHits, hits } = await fetchPhotos(query, currentPage);
-    if (totalHits === 0) {
-      refs.gallery.innerHTML = '';
-      displayMessage(
-        'Sorry, there are no images matching your search query. Please try again!',
-        '#EF4040'
-      );
-      hideElement(refs.loader);
-      return;
-    }
-    maxPage = Math.ceil(totalHits / perPage);
-    const markup = galleryTemplate(hits);
-    refs.gallery.innerHTML = markup;
-    lightbox.refresh();
-    catchLastPage();
+    updateGallery(totalHits, hits);
   } catch (error) {
     showErrMessage(error);
+  } finally {
+    updateLoadMoreBtnStatus();
+    hideElement(refs.loader);
   }
-  updateLoadMoreBtnStatus();
-  hideElement(refs.loader);
 }
-
-refs.loadMoreBtn.addEventListener('click', handleLoadMoreBtnClick);
 
 async function handleLoadMoreBtnClick() {
   hideElement(refs.loadMoreBtn);
@@ -66,16 +55,16 @@ async function handleLoadMoreBtnClick() {
   try {
     const { hits } = await fetchPhotos(query, currentPage);
     const markup = galleryTemplate(hits);
-    refs.gallery.insertAdjacentHTML('beforeend', markup);
+    insertGalleryMarkup(markup);
     lightbox.refresh();
     catchLastPage();
     scrollOldElements();
   } catch (error) {
     showErrMessage(error);
+  } finally {
+    updateLoadMoreBtnStatus();
+    hideElement(refs.loader);
   }
-
-  updateLoadMoreBtnStatus();
-  hideElement(refs.loader);
 }
 
 function updateLoadMoreBtnStatus() {
@@ -83,6 +72,7 @@ function updateLoadMoreBtnStatus() {
     hideElement(refs.loadMoreBtn);
   } else showElement(refs.loadMoreBtn);
 }
+
 function catchLastPage() {
   if (maxPage !== currentPage) {
     return;
@@ -94,6 +84,7 @@ function catchLastPage() {
   }
   refs.searchForm.reset();
 }
+
 function hideElement(element) {
   element.classList.add('visually-hidden');
 }
@@ -127,4 +118,28 @@ function scrollOldElements() {
     top: scrollHeight,
     behavior: 'smooth',
   });
+}
+function updateGallery(totalElements, elementsArr) {
+  if (totalElements === 0) {
+    clearGallery();
+    displayMessage(
+      'Sorry, there are no images matching your search query. Please try again!',
+      '#EF4040'
+    );
+    hideElement(refs.loader);
+    refs.searchForm.reset();
+    return;
+  }
+  maxPage = Math.ceil(totalElements / perPage);
+  const markup = galleryTemplate(elementsArr);
+  insertGalleryMarkup(markup);
+  lightbox.refresh();
+  catchLastPage();
+}
+
+function clearGallery() {
+  refs.gallery.innerHTML = '';
+}
+function insertGalleryMarkup(markup) {
+  refs.gallery.insertAdjacentHTML('beforeend', markup);
 }
